@@ -1,43 +1,109 @@
 import streamlit as st
 from agent import run_agent
 
-st.set_page_config(page_title="SQL Query Agent", page_icon=":database:", layout="wide")
+st.set_page_config(page_title="Epsilon LangChain SQL Agent", page_icon=":database:", layout="wide")
 
-st.title("SQL Query Agent")
-st.markdown("Enter a natural language query to retrieve data from the SQLite database. The agent will generate and execute a SQL query, displaying the results and execution details.")
+st.markdown("""
+    <style>
+    .stChatMessage {
+        border-radius: 10px;
+        padding: 10px;
+        margin: 5px 0;
+    }
+    .user-message {
+        background-color: #e6f3ff;
+        text-align: right;
+    }
+    .agent-message {
+        background-color: #f0f0f0;
+    }
+    .stButton>button {
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+    }
+    .stButton>button:hover {
+        background-color: #0056b3;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-with st.form(key="query_form"):
-    query = st.text_input("Enter your query:", placeholder="e.g., Ваш запрос...?")
-    submit_button = st.form_submit_button(label="Run Query")
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-if submit_button and query:
-    with st.spinner("Processing query..."):
-        result = run_agent(query)
-        
-        if result["success"]:
-            st.subheader("Result")
-            st.success(result["output"])
-            
-            if result["intermediate_steps"]:
-                st.subheader("Execution Details")
-                for step in result["intermediate_steps"]:
-                    action = step[0]
-                    output = step[1]
-                    if action.tool == "db_query_tool":
-                        st.code(output, language="sql")
-                    elif action.tool == "query_check":
-                        st.code(output, language="sql")
-                    else:
-                        st.write(f"**{action.tool}**: {output}")
-        else:
-            st.subheader("Error")
-            st.error(result["error"])
-
-st.sidebar.header("Instructions")
+st.sidebar.header("LangChain SQL Agent")
 st.sidebar.markdown("""
-1. Enter a natural language query in the text box.
-2. Click "Run Query" to execute.
-3. View the results and any generated SQL queries below.
-4. The agent will automatically validate and correct SQL queries if needed.
-5. Ensure queries are safe (no INSERT, UPDATE, DELETE, DROP).
+Приветствуем в LangChain SQL Agent! Задавайте вопросы о базе данных на естественном языке, и агент сгенерирует и выполнит для вас SQL-запросы.
+- Агент автоматически использует предыдущие вопросы и ответы в качестве контекста, когда ваш запрос ссылается на прошлые вопросы (например, «те компании», «предыдущие результаты»).
+- Просмотрите прошлые взаимодействия ниже.
 """)
+
+def should_use_history(query: str) -> bool:
+    history_keywords = ["those", "these", "previous", "last", "same", "that", "them"]
+    query_lower = query.lower()
+    return any(keyword in query_lower for keyword in history_keywords)
+
+st.title("Epsilon LangChain Agent")
+st.markdown("Чат с LangChain SQL Agent для запроса базы данных. Результаты и SQL-запросы отображаются под каждым сообщением.")
+
+chat_container = st.container()
+
+with chat_container:
+    for idx, chat in enumerate(st.session_state.chat_history):
+        with st.chat_message("user", avatar="🧑‍💻"):
+            st.markdown(f"**You**: {chat['question']}")
+            if chat["use_history"]:
+                st.markdown("*Using chat history*")
+        with st.chat_message("assistant", avatar="🤖"):
+            if chat["success"]:
+                st.markdown(f"**Agent**: {chat['answer']}")
+                with st.expander("Show SQL Queries"):
+                    for step in chat["intermediate_steps"]:
+                        action = step[0]
+                        output = step[1]
+                        if action.tool in ["db_query_tool", "query_check"]:
+                            st.code(output, language="sql")
+                        else:
+                            st.write(f"**{action.tool}**: {output}")
+            else:
+                st.error(f"**Error**: {chat['error']}")
+
+query = st.chat_input("Задайте вопрос о базе данных...")
+
+if query:
+    use_history = should_use_history(query)
+
+    with chat_container:
+        with st.chat_message("user", avatar="🧑‍💻"):
+            st.markdown(f"**You**: {query}")
+            if use_history:
+                st.markdown("*Использование истории чата*")
+
+    with st.spinner("Processing query..."):
+        result = run_agent(query, use_history=use_history, chat_history=st.session_state.chat_history)
+
+        with chat_container:
+            with st.chat_message("assistant", avatar="🤖"):
+                if result["success"]:
+                    st.markdown(f"**Agent**: {result['output']}")
+                    with st.expander("Show SQL Queries"):
+                        for step in result["intermediate_steps"]:
+                            action = step[0]
+                            output = step[1]
+                            if action.tool in ["db_query_tool", "query_check"]:
+                                st.code(output, language="sql")
+                            else:
+                                st.write(f"**{action.tool}**: {output}")
+                else:
+                    st.error(f"**Error**: {result['error']}")
+
+        st.session_state.chat_history.append({
+            "question": query,
+            "answer": result["output"] if result["success"] else result["error"],
+            "success": result["success"],
+            "intermediate_steps": result["intermediate_steps"],
+            "use_history": use_history
+        })
+
+if len(st.session_state.chat_history) > 50:
+    st.session_state.chat_history = st.session_state.chat_history[-50:]
