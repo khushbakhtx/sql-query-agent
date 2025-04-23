@@ -10,7 +10,7 @@ load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-llm = ChatOpenAI(model="gpt-4o", api_key=openai_api_key, temperature=0)
+llm = ChatOpenAI(model="gpt-4o", openai_api_key=openai_api_key, temperature=0)
 
 toolkit = SQLDatabaseToolkit(db=db, llm=llm)
 
