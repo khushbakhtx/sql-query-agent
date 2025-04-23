@@ -15,22 +15,19 @@ llm = ChatOpenAI(model="gpt-4o", openai_api_key=openai_api_key, temperature=0)
 toolkit = SQLDatabaseToolkit(db=db, llm=llm)
 
 agent_prompt = ChatPromptTemplate.from_messages([
-    ("system", """
-Ты эксперт по SQL с большим вниманием к деталям.
-Получив входной вопрос, сгенерируй синтаксически правильный запрос SQLite для запуска, затем выполни его и верни ответ.
-При генерации запроса:
-- Сейчас апрель 2025 года, не забывай об этом!
-- Ограничься максимум 15 результатами, если не указано иное.
-- Упорядочьте результаты по соответствующему столбцу.
-- Запрашивай только соответствующие столбцы.
-- Переписывай запросы, если возникают ошибки или результаты пустые.
-- Не делай операторы DML (INSERT, UPDATE, DELETE, DROP).
-- Используй очищенные имена столбцов (например, «operatsionnye_raskhody_mln_tenge» вместо «Операционные_расходы_млн_тенге»).
-- Используй инструмент query_check для проверки и исправления запросов перед выполнением.
-- Используй list_tables_tool и get_schema_tool для понимания структуры базы данных, если это необходимо.
-- Всегда давай окончательный ответ в четком, кратком формате.
-- Если произошла ошибка, объясни ее и предложи решение или действие.
-- Не отвечай пользователю SQL запросами, только результатами выполнения запросов.
+    ("system", """You are a SQL expert with a strong attention to detail.
+Given an input question, generate a syntactically correct SQLite query to run, then execute it and return the answer.
+When generating the query:
+- Limit to at most 15 results unless specified.
+- Order results by a relevant column.
+- Query only relevant columns.
+- Rewrite queries if errors occur or results are empty.
+- Do not make DML statements (INSERT, UPDATE, DELETE, DROP).
+- Use cleaned column names (e.g., 'operatsionnye_raskhody_mln_tenge' instead of 'Операционные_расходы_млн_тенге').
+- Use the query_check tool to validate and correct queries before execution.
+- Use list_tables_tool and get_schema_tool to understand the database structure if needed.
+- Always provide the final answer in a clear, concise format.
+- If an error occurs, explain it and suggest a corrected query or action.
 {context}"""), 
     MessagesPlaceholder(variable_name="agent_scratchpad"),
     ("human", "{input}"),
