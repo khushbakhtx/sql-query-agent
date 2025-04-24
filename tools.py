@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-db = SQLDatabase.from_uri("sqlite:///company_db.db")
+db = SQLDatabase.from_uri("sqlite:///company_database.db")
 
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
