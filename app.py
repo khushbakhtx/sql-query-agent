@@ -33,9 +33,7 @@ if "chat_history" not in st.session_state:
 
 st.sidebar.header("LangChain SQL Agent")
 st.sidebar.markdown("""
-Приветствуем в LangChain SQL Agent! Задавайте вопросы о базе данных на естественном языке, и агент сгенерирует и выполнит для вас SQL-запросы.
-- Агент автоматически использует предыдущие вопросы и ответы в качестве контекста, когда ваш запрос ссылается на прошлые вопросы (например, «те компании», «предыдущие результаты»).
-- Просмотрите прошлые взаимодействия ниже.
+Приветствуем в LangChain SQL Agent! Задавайте вопросы связанные с тремя файлами:\n - train_and_forecast\n - main_metrics\n - var1_correlations\n 
 """)
 
 def should_use_history(query: str) -> bool:

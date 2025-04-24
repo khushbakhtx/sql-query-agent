@@ -5,6 +5,7 @@ import os
 csv_files = {
     'train_and_forecast': 'train_and_forecast.csv',
     'main_metrics': 'main_metrics.csv',
+    'var1_correlations': 'var1_correlations.csv',
 }
 
 db_filename = 'company_database.db'
