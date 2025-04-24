@@ -3,7 +3,8 @@ import sqlite3
 import os
 
 csv_files = {
-    'train_and_forecast': 'train_and_forecast.csv'
+    'train_and_forecast': 'train_and_forecast.csv',
+    'main_metrics': 'main_metrics.csv',
 }
 
 db_filename = 'company_database.db'
